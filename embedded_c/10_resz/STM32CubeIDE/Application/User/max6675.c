@@ -68,7 +68,7 @@ uint16_t spi_read(void)
 float TEMP_read(void)
 {
 	uint16_t spiData = spi_read();
-	float temp_C = (float)(spiData >> 2u) + ((spiData >> 1u) & 1u) * 0.5f + (spiData & 1u) * 0.25f;
+	float temp_C = (float)spiData / 4.0f;
 
 	return temp_C;
 }
