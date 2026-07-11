@@ -1,0 +1,62 @@
+# Board: LOLIN S2 Mini (LOLIN/Wemos)
+# Definition: definitions/boards/esp32-s2-mini/manifest.yaml
+
+esphome:
+  name: wemos-s2-mini-test
+  friendly_name: Wemos S2 Mini Test
+
+esp32:
+  variant: esp32s2
+  flash_size: 4MB
+  framework:
+    type: esp-idf
+
+logger:
+
+api:
+  encryption:
+    key: "IPAHh96/3sv+DYmC2hscEUCdihhDsP2u1H4gds57YGs="
+
+ota:
+  - platform: esphome
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  ap:
+    ssid: Wemos S2 Mini T Fallback Hotspot
+    password: "Lohy81CHkVXf"
+
+captive_portal:
+
+remote_transmitter:
+  pin: GPIO33
+  carrier_duty_percent: 50%
+
+climate:
+  - platform: midea_ir
+    name: "Fisher AC"
+
+button:
+  - platform: template
+    name: "Samsung TV Power Test"
+    on_press:
+      - remote_transmitter.transmit_samsung:
+          data: 0xE0E040BF
+  - platform: template
+    name: "Fisher AC toggle LED"
+    icon: mdi:led-variant-on
+    on_press:
+      - remote_transmitter.transmit_pronto: 
+          data: >-
+            0000 006D 0064 0000 00AC 00A7 0017 003C 0017 0013 0017 003B 0018 003B 0018 003B 0018 0012 0018 0012 0018 003B 0018 0012 0018 003B 0018 0012 0018 0012 0018 0012 0018 003B 0018 003B 0018 0012 0018 003B 0018 003B 0018 003B 0018 003B 
+            0018 0012 0018 003B 0018 0012 0018 003B 0018 0012 0018 0012 0018 0012 0018 0012 0018 003B 0018 0012 0018 003B 0018 0012 0018 0012 0018 0012 0018 0012 0018 0012 0018 003B 0018 0012 0018 0012 0018 003B 0018 003B 0018 003B 0018 003B 
+            0018 003B 0018 0012 0018 003B 0018 003B 0018 0012 0018 00C5 00AC 00A7 0017 003C 0017 0013 0017 003B 0018 003B 0018 003B 0018 0012 0018 0012 0018 003B 0018 0012 0018 003B 0018 0012 0018 0012 0018 0012 0018 003B 0018 003B 0018 0012 
+            0018 003B 0018 003B 0018 003B 0018 003B 0018 0012 0018 003B 0018 0012 0018 003B 0018 0012 0018 0012 0018 0012 0018 0012 0018 003B 0018 0012 0018 003B 0018 0012 0018 0012 0018 0012 0018 0012 0018 0012 0018 003B 0018 0012 0018 0012 
+            0018 003B 0018 003B 0018 003B 0018 003B 0018 003B 0018 0012 0018 003B 0018 003B 0018 0012 0018 0180 
+
+remote_receiver:
+  pin: GPIO18
+  dump: all
+  
+
