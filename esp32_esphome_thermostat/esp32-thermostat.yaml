@@ -1,0 +1,235 @@
+# Board: ESP32 Relay x2
+# Definition: definitions/boards/esp32_relay_x2/manifest.yaml
+
+esphome:
+  name: esp32-thermostat
+  friendly_name: ESP32 Thermostat
+
+esp32:
+  variant: esp32
+
+logger:
+
+api:
+  encryption:
+    key: "rdk+jr7jPDxoJDIIBwwLZ+TnuzzVhTbymRsFELaRj/Q="
+
+ota:
+  - platform: esphome
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  ap:
+    ssid: ESP32 Thermosta Fallback Hotspot
+    password: "WjNiEFGyStoh"
+
+captive_portal:
+
+output:
+  - platform: gpio
+    id: output_led
+    pin: 23
+
+light:
+  - platform: binary
+    id: light_led
+    name: LED
+    output: output_led
+
+switch:
+  - platform: gpio
+    id: relay_1
+    name: "Heating Relay"
+    pin: 16
+    restore_mode: ALWAYS_OFF
+    internal: true
+  - platform: gpio
+    id: relay_2
+    name: Relay 2
+    pin: 17
+
+i2c:
+  sda: GPIO25
+  scl: GPIO32
+  scan: true
+  frequency: 50kHz
+
+sensor:
+  - platform: sht3xd
+    address: 0x44
+
+    temperature:
+      id: room_temperature
+      name: "Temperature"
+      accuracy_decimals: 1
+
+    humidity:
+      id: room_humidity
+      name: "Humidity"
+      accuracy_decimals: 1
+
+    update_interval: 30s
+
+climate:
+  - platform: thermostat
+    name: "Room Thermostat"
+    id: room_thermostat
+    sensor: room_temperature
+
+    min_heating_off_time: 30s
+    min_heating_run_time: 30s
+    min_idle_time: 10s
+
+    heat_deadband: 0.3 °C
+    heat_overrun: 0.2 °C
+
+    heat_action:
+      - switch.turn_on: relay_1
+
+    idle_action:
+      - switch.turn_off: relay_1
+
+    off_mode:
+      - switch.turn_off: relay_1
+
+    default_preset: Home
+    on_boot_restore_from: memory
+
+    preset:
+      - name: Home
+        default_target_temperature_low: 21 °C
+        mode: HEAT
+
+      - name: Eco
+        default_target_temperature_low: 18 °C
+        mode: HEAT
+
+      - name: Away
+        default_target_temperature_low: 15 °C
+        mode: HEAT
+
+display:
+  - platform: tm1637
+    id: thermostat_display
+    clk_pin: GPIO18
+    dio_pin: GPIO5
+    length: 4
+    update_interval: 250ms
+    lambda: |-
+      const bool show_target =
+          static_cast<int32_t>(
+              id(show_target_until) - millis()
+          ) > 0;
+    
+      if (id(room_thermostat).mode ==
+          climate::CLIMATE_MODE_OFF) 
+      {
+        it.print("OFF");
+        return;
+      }
+    
+      if (show_target) 
+      {
+        const bool visible = (millis() / 400) % 2 == 0;
+    
+        if (!visible) 
+        {
+          it.print("    ");
+          return;
+        }
+      }
+    
+      const float value = show_target
+          ? id(room_thermostat).target_temperature
+          : id(room_temperature).state;
+    
+      if (isnan(value)) 
+      {
+        it.print("----");
+        return;
+      }
+    
+      
+      it.printf("%3.1f", value);
+
+binary_sensor:
+  - platform: gpio
+    id: button_plus
+    pin:
+      number: GPIO15
+      mode:
+        input: true
+        pullup: true
+      inverted: true
+
+    filters:
+      - delayed_on: 30ms
+
+    on_press:
+      - climate.control:
+          id: room_thermostat
+          target_temperature: !lambda |-
+            float target = id(room_thermostat).target_temperature;
+            return min(target + 0.5f, 30.0f);
+
+      - lambda: |-
+          id(show_target_until) = millis() + 3000;
+
+  - platform: gpio
+    id: button_minus
+    pin:
+      number: GPIO2
+      mode:
+        input: true
+        pullup: true
+      inverted: true
+
+    filters:
+      - delayed_on: 30ms
+
+    on_press:
+      - climate.control:
+          id: room_thermostat
+          target_temperature: !lambda |-
+            float target = id(room_thermostat).target_temperature;
+            return max(target - 0.5f, 5.0f);
+
+      - lambda: |-
+          id(show_target_until) = millis() + 3000;
+
+  - platform: gpio
+    id: button_mode
+    pin:
+      number: GPIO4
+      mode:
+        input: true
+        pullup: true
+      inverted: true
+
+    filters:
+      - delayed_on: 30ms
+
+    on_press:
+      - if:
+          condition:
+            lambda: |-
+              return id(room_thermostat).mode ==
+                     climate::CLIMATE_MODE_OFF;
+          then:
+            - climate.control:
+                id: room_thermostat
+                mode: HEAT
+          else:
+            - climate.control:
+                id: room_thermostat
+                mode: "OFF"
+
+      - lambda: |-
+          id(show_target_until) = millis() + 3000;
+
+globals:
+  - id: show_target_until
+    type: uint32_t
+    restore_value: no
+    initial_value: "0"
