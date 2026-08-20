@@ -1,0 +1,59 @@
+esphome:
+  name: waveshare-modbus-gateway
+  friendly_name: Waveshare Modbus Gateway
+  build_flags:
+    - -DBOARD_HAS_PSRAM
+    - -DARDUINO_USB_MODE=1
+    - -DARDUINO_USB_CDC_ON_BOOT=1
+    - -DCORE_DEBUG_LEVEL=3
+  platformio_options:
+    upload_speed: 921600
+    lib_ldf_mode: deep+
+    board_build.arduino.memory_type: qio_opi
+
+esp32:
+  board: esp32-s3-devkitc-1
+  flash_size: 16MB
+  framework:
+    type: arduino
+  # Keep PlatformIO for maximum compatibility with eModbus 1.7.4.
+  toolchain: platformio
+
+psram:
+  mode: octal
+  speed: 80MHz
+
+logger:
+  # Native USB logging avoids using UART1, which is dedicated to RS485.
+  hardware_uart: USB_CDC
+  level: INFO
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+api:
+  encryption:
+    # Regenerate with: openssl rand -base64 32
+    key: "ccD70xNqw3EytUzuWnkqMt+KGQ1OHSiIX6j13ddYlOU="
+
+ota:
+  - platform: esphome
+
+external_components:
+  - source:
+      type: local
+      path: components
+    components: [modbus_tcp_rtu_bridge]
+
+modbus_tcp_rtu_bridge:
+  tx_pin: 17
+  rx_pin: 18
+  flow_control_pin: 21
+  uart_num: 1
+  baud_rate: 9600
+  tcp_port: 502
+  slave_id: 1
+  max_clients: 4
+  inactivity_timeout: 5s
+  response_timeout: 2s

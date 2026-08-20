@@ -4,7 +4,7 @@
  * @author      Copyright (C) Peter Ivanov, 2026
  *
  * Created      2026-05-04 11:30:53
- * Last modify: 2026-08-20 09:30:21 ivanovp {Time-stamp}
+ * Last modify: 2026-06-10 20:37:22 ivanovp {Time-stamp}
  * Licence:     GPL
  */
 
@@ -59,10 +59,10 @@
 #define MODBUS_BRIDGE_INACTIVITY_TIMEOUT_MS 5000
 
 #ifndef SSID
-#define SSID "Som"
+#define SSID "My SSID"
 #endif
 #ifndef PASSWORD
-#define PASSWORD "kingooP0"
+#define PASSWORD "My password"
 #endif
 
 // RTU client that communicates with the RS485 Modbus slave.
