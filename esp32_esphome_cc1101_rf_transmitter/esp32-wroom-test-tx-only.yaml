@@ -1,0 +1,198 @@
+# Board: Espressif ESP32 Dev Module
+# Definition: definitions/boards/esp32dev/manifest.yaml
+
+esphome:
+  name: esp32-wroom32-test
+  friendly_name: ESP32_WROOM32_TEST
+  on_boot:
+    priority: -100
+    then:
+      # The CC1101 driver initially enters RX during setup; leave it idle afterward.
+      - cc1101.set_idle: cc1101_radio
+      - logger.log: "AOK: startup set_idle returned"
+#esphome:
+#  name: aok-windows
+#  friendly_name: A-OK Windows
+
+esp32:
+  board: esp32dev
+#  framework:
+#    type: arduino
+
+# TX-only diagnostic variant: flash instead of the original configuration.
+logger:
+  level: VERBOSE
+  baud_rate: 115200
+
+debug:
+  update_interval: 5s
+
+text_sensor:
+  - platform: debug
+    device:
+      name: "Device Info"
+    reset_reason:
+      name: "Reset Reason"
+
+sensor:
+  - platform: debug
+    free:
+      name: "Heap Free"
+    block:
+      name: "Heap Largest Free Block"
+    loop_time:
+      name: "Loop Time"
+
+api:
+  encryption:
+    key: "r0ChDVKVviXPZ5R9fQljkvqfMCwuythrFWKaDXLO39c="
+
+ota:
+  - platform: esphome
+    encryption:
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  ap:
+    ssid: ESP32_WROOM32_T Fallback Hotspot
+    password: "haMyX3bTLhgl"
+
+captive_portal:
+
+# ------------------------------------------------------------------
+# A-OK external component
+# ------------------------------------------------------------------
+
+# Local adaptation makes the upstream receiver_id optional.
+external_components:
+  - source:
+      type: local
+      path: components
+    components: [aok_rf]
+
+# Load the A-OK encoder and TX actions without a receiver.
+aok_rf: {}
+
+# ------------------------------------------------------------------
+# SPI
+#
+# ESP32-WROOM-32U       CC1101
+# GPIO18                SCK
+# GPIO23                MOSI
+# GPIO19                MISO
+# GPIO5                 CSN
+# GPIO25                GDO0 / TX
+# GPIO27                GDO2 / unused (may remain wired)
+# ------------------------------------------------------------------
+
+spi:
+  clk_pin: GPIO18
+  mosi_pin: GPIO23
+  miso_pin: GPIO19
+
+
+# ------------------------------------------------------------------
+# CC1101 radio
+# ------------------------------------------------------------------
+
+cc1101:
+  id: cc1101_radio
+  cs_pin: GPIO5
+  frequency: 433.92MHz
+  modulation_type: ASK/OOK
+  output_power: 10
+
+
+# ------------------------------------------------------------------
+# RF transmitter
+#
+# CC1101 GDO0 -> ESP32 GPIO25
+# ------------------------------------------------------------------
+
+remote_transmitter:
+  id: aok_tx
+  pin: GPIO25
+  carrier_duty_percent: 100%
+
+  on_transmit:
+    then:
+      - logger.log: "AOK: requesting CC1101 TX"
+      - cc1101.begin_tx: cc1101_radio
+      - logger.log: "AOK: begin_tx returned"
+
+  on_complete:
+    then:
+      - logger.log: "AOK: waveform transmission completed"
+      # Keep the radio idle between commands; do not return to RX.
+      - cc1101.set_idle: cc1101_radio
+      - logger.log: "AOK: set_idle returned"
+
+
+# ------------------------------------------------------------------
+# Window 1
+#
+# A-OK Remote ID: 0x000984
+# Address:        0x0001
+# ------------------------------------------------------------------
+
+cover:
+  - platform: template
+    name: "Window 1"
+    id: window_1
+    assumed_state: true
+
+    open_action:
+      - logger.log: "Window 1: OPEN requested"
+      - remote_transmitter.transmit_aok:
+          remote_id: 0x000984
+          address: 0x0001
+          command: UP
+
+    stop_action:
+      - logger.log: "Window 1: STOP requested"
+      - remote_transmitter.transmit_aok:
+          remote_id: 0x000984
+          address: 0x0001
+          command: STOP
+
+    close_action:
+      - logger.log: "Window 1: CLOSE requested"
+      - remote_transmitter.transmit_aok:
+          remote_id: 0x000984
+          address: 0x0001
+          command: DOWN
+
+
+# ------------------------------------------------------------------
+# Window 2
+#
+# A-OK Remote ID: 0x000306
+# Address:        0x0001
+# ------------------------------------------------------------------
+
+  - platform: template
+    name: "Window 2"
+    id: window_2
+    assumed_state: true
+
+    open_action:
+      - logger.log: "Window 2: OPEN requested"
+      - remote_transmitter.transmit_aok:
+          remote_id: 0x000306
+          address: 0x0001
+          command: UP
+
+    stop_action:
+      - logger.log: "Window 2: STOP requested"
+      - remote_transmitter.transmit_aok:
+          remote_id: 0x000306
+          address: 0x0001
+          command: STOP
+
+    close_action:
+      - logger.log: "Window 2: CLOSE requested"
+      - remote_transmitter.transmit_aok:
+          remote_id: 0x000306
+          address: 0x0001
+          command: DOWN
