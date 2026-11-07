@@ -82,9 +82,10 @@ struct AOKData {
 // reception as a plain RemoteReceiverListener instead.
 class AOKProtocol : public remote_base::RemoteProtocol<AOKData> {
  public:
-  void encode(remote_base::RemoteTransmitData *dst, const AOKData &data) override;
-  optional<AOKData> decode(remote_base::RemoteReceiveData src) override;
-  void dump(const AOKData &data) override;
+  // ESPHome 2026.10 made these RemoteProtocol methods non-virtual.
+  void encode(remote_base::RemoteTransmitData *dst, const AOKData &data);
+  optional<AOKData> decode(remote_base::RemoteReceiveData src);
+  void dump(const AOKData &data);
 };
 
 
