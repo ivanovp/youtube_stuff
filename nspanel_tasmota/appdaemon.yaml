@@ -1,0 +1,27 @@
+---
+secrets: /homeassistant/secrets.yaml
+appdaemon:
+  latitude: 47.619844
+  longitude: 19.179488
+  elevation: 2
+  time_zone: Europe/Budapest
+  app_dir: /homeassistant/appdaemon/apps/ # !!! This is really important for AppDaemon HA Addon >= 15
+  plugins:
+    HASS:
+      type: hass
+      token: !env_var SUPERVISOR_TOKEN
+    MQTT:
+      type: mqtt
+      namespace: mqtt
+      client_id: "appdaemon"
+      client_host: 192.168.5.105
+      client_port: 1883
+      client_user: "tasmota"
+      client_password: "tasmota"
+      client_topics: NONE
+http:
+  url: http://0.0.0.0:5050
+admin:
+api:
+hadashboard:
+

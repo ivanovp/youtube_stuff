@@ -1,0 +1,32 @@
+---
+nspanel-1:
+  module: nspanel-lovelace-ui
+  class: NsPanelLovelaceUIManager
+  config:
+    panelRecvTopic: "tele/nspanel/RESULT"
+    panelSendTopic: "cmnd/nspanel/CustomSend"
+    model: eu
+    updateMode: "auto-notify"
+    locale: "hu_HU"
+    screensaver:
+      entity: weather.forecast_home
+    cards:
+      - type: cardAlarm
+        entity: alarm_control_panel.alarmo
+      - type: cardEntities
+        title: Nappali
+        entities:
+          - entity: sensor.living_room_living_room_temperature_humidity_temperature
+            name: Nappali hőmérséklet
+          - entity: switch.living_room_zigbee_switch
+            name: Nappali kapcsoló
+      - type: cardQR
+        title: Vendég Wifi #Guest Wifi
+        qrCode: "WIFI:S:Vendeg;T:WPA;P:jelszo;;"
+        entities:
+          - entity: iText.Vendeg
+            name: Név #Name
+            icon: mdi:wifi
+          - entity: iText.jelszo
+            name: Jelszó #Password
+            icon: mdi:key
